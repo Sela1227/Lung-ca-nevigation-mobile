@@ -203,6 +203,7 @@ input,textarea,select{font-family:inherit;font-size:inherit}
 .cross-tbl td:last-child{font-weight:700;background:var(--surface2)}
 
 @media(max-width:768px){
+  .mob-hide{display:none!important}
   .sidebar{position:fixed;bottom:0;left:0;right:0;height:calc(64px + env(safe-area-inset-bottom,0px));width:100%;flex-direction:row;padding:0 4px;padding-bottom:env(safe-area-inset-bottom,0px);justify-content:space-around;z-index:200;border-top:1px solid rgba(255,255,255,.08)}
   .sidebar .logo,.sidebar .spacer{display:none}
   .sidebar .nav-item{width:auto;flex:1;max-width:56px;height:56px;font-size:9px}
@@ -210,10 +211,10 @@ input,textarea,select{font-family:inherit;font-size:inherit}
   .sidebar .nav-item.active::before{left:50%;top:-2px;transform:translateX(-50%);width:24px;height:3px;border-radius:0 0 3px 3px}
   .app{flex-direction:column}
   .main{padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))}
-  .topbar{padding:0 10px;height:48px;gap:6px}
-  .topbar-title{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
-  .topbar-info{font-size:11px}
-  .topbar-btn{height:32px;padding:0 10px;font-size:12px;gap:4px;white-space:nowrap}
+  .topbar{padding:0 10px;height:48px;gap:8px}
+  .topbar-title{font-size:15px;white-space:nowrap}
+  .topbar-info{font-size:11px;white-space:nowrap}
+  .topbar-btn{height:36px;width:36px;padding:0;font-size:16px;justify-content:center;border-radius:8px}
   .topbar .spacer{flex:1;min-width:0}
   .panel{padding:12px!important}
   .panel-inner{max-width:100%}
@@ -242,28 +243,34 @@ input,textarea,select{font-family:inherit;font-size:inherit}
   .pw-side-row{flex:1;min-width:60px;font-size:13px;border-bottom:none;justify-content:center;gap:4px;background:var(--surface);padding:6px 10px;border-radius:var(--radius);border:1px solid var(--border)}
   .pw-main{overflow-y:visible;padding:14px 16px}
   .pw-cost{width:100%;border-left:none;border-top:1px solid var(--border);padding:14px 16px}
-  /* Summary: allow scroll, stack vertically */
-  #panel-summary{overflow-y:auto!important;-webkit-overflow-scrolling:touch}
-  .sum-vp{height:auto;min-height:100%;padding:12px}
-  .sum-page{height:auto;overflow:visible}
-  .sum-hdr{padding:10px 16px 8px}
-  .sum-org{font-size:15px}
-  .sum-pt .sp{padding:2px 10px;font-size:14px}
-  .sum-pt .sp .l{font-size:11px}
-  .sum-cols{flex-direction:column;overflow:visible}
-  .sum-left{border-right:none;border-bottom:1px solid var(--border);overflow:visible}
-  .sum-right{overflow:visible}
-  .sum-sec{padding:12px 16px}
+  /* Summary: full rewrite for mobile */
+  #panel-summary{padding:0!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch}
+  .sum-vp{height:auto!important;padding:10px}
+  .sum-page{height:auto!important;overflow:visible!important}
+  .sum-hdr{padding:12px 16px 10px}
+  .sum-org{font-size:14px}
+  .sum-dot{margin:0 4px}
+  .sum-pt .sp{padding:2px 8px;font-size:13px}
+  .sum-pt .sp .l{font-size:10px}
+  .sum-cols{flex-direction:column!important;overflow:visible!important;flex:none!important}
+  .sum-left,.sum-right{flex:none!important;overflow:visible!important}
+  .sum-left{border-right:none!important;border-bottom:1px solid var(--border)}
+  .sum-sec{padding:10px 16px}
   .sum-sec.compact{padding:8px 16px}
-  .sum-sec.sum-grow{overflow:visible;flex:none}
-  .sum-alerts{padding:8px 16px}
-  .sum-actions{padding:10px 16px;gap:10px}
+  .sum-sec.sum-grow{overflow:visible!important;flex:none!important}
   .sck{grid-template-columns:1fr}
-  .sr{font-size:14px}
+  .sr{font-size:13px;padding:5px 0}
   .diag-tag{font-size:13px}
-  .st{font-size:13px}
+  .diag-tag .l{font-size:10px}
+  .st{font-size:13px;margin-bottom:6px}
+  .stx .tl{font-size:13px}
   .stx .tv{font-size:14px}
-  .snote{font-size:14px}
+  .snote{font-size:13px}
+  .sum-alerts{padding:8px 14px;gap:6px}
+  .sum-alerts .at{font-size:12px}
+  .sum-alerts .ai{font-size:12px}
+  .sum-actions{padding:10px 16px;gap:10px}
+  .sum-actions .btn-nav{font-size:14px;padding:0 20px!important}
   /* Stats: compact */
   #panel-stats{overflow:hidden!important}
   .stat-top{padding:12px 14px 6px}
@@ -412,11 +419,11 @@ mark{background:#fef08a;border-radius:2px;padding:0 1px}
 
   <div class="main">
     <div class="topbar">
-      <div class="topbar-title" id="topbar-title"><i class="fa-solid fa-lungs"></i> 肺癌臨床路徑</div>
+      <div class="topbar-title" id="topbar-title"><i class="fa-solid fa-lungs"></i> 肺癌<span class="mob-hide">臨床</span>路徑</div>
       <div class="spacer"></div>
       <span class="topbar-info" id="topbar-date"></span>
-      <button class="topbar-btn outline" onclick="window.print()"><i class="fa-solid fa-print"></i> 列印</button>
-      <button class="topbar-btn outline" onclick="APP.newPatient()"><i class="fa-solid fa-plus"></i> 新病人</button>
+      <button class="topbar-btn outline" onclick="window.print()"><i class="fa-solid fa-print"></i><span class="mob-hide"> 列印</span></button>
+      <button class="topbar-btn outline" onclick="APP.newPatient()"><i class="fa-solid fa-plus"></i><span class="mob-hide"> 新病人</span></button>
     </div>
 
     <div class="content">
