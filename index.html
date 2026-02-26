@@ -210,9 +210,11 @@ input,textarea,select{font-family:inherit;font-size:inherit}
   .sidebar .nav-item.active::before{left:50%;top:-2px;transform:translateX(-50%);width:24px;height:3px;border-radius:0 0 3px 3px}
   .app{flex-direction:column}
   .main{padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))}
-  .topbar{padding:0 12px;height:48px}
-  .topbar h2{font-size:14px}
-  .topbar-btn{height:34px;padding:0 10px;font-size:12px}
+  .topbar{padding:0 10px;height:48px;gap:6px}
+  .topbar-title{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+  .topbar-info{font-size:11px}
+  .topbar-btn{height:32px;padding:0 10px;font-size:12px;gap:4px;white-space:nowrap}
+  .topbar .spacer{flex:1;min-width:0}
   .panel{padding:12px!important}
   .panel-inner{max-width:100%}
   .grid-2,.grid-3{grid-template-columns:1fr}
@@ -240,13 +242,28 @@ input,textarea,select{font-family:inherit;font-size:inherit}
   .pw-side-row{flex:1;min-width:60px;font-size:13px;border-bottom:none;justify-content:center;gap:4px;background:var(--surface);padding:6px 10px;border-radius:var(--radius);border:1px solid var(--border)}
   .pw-main{overflow-y:visible;padding:14px 16px}
   .pw-cost{width:100%;border-left:none;border-top:1px solid var(--border);padding:14px 16px}
-  /* Summary: allow scroll */
+  /* Summary: allow scroll, stack vertically */
   #panel-summary{overflow-y:auto!important;-webkit-overflow-scrolling:touch}
   .sum-vp{height:auto;min-height:100%;padding:12px}
+  .sum-page{height:auto;overflow:visible}
+  .sum-hdr{padding:10px 16px 8px}
+  .sum-org{font-size:15px}
+  .sum-pt .sp{padding:2px 10px;font-size:14px}
+  .sum-pt .sp .l{font-size:11px}
   .sum-cols{flex-direction:column;overflow:visible}
-  .sum-left{border-right:none;border-bottom:1px solid var(--border);padding-right:0;padding-bottom:12px}
-  .sum-right{padding-left:0;padding-top:12px}
-  .sum-sec{font-size:13px}
+  .sum-left{border-right:none;border-bottom:1px solid var(--border);overflow:visible}
+  .sum-right{overflow:visible}
+  .sum-sec{padding:12px 16px}
+  .sum-sec.compact{padding:8px 16px}
+  .sum-sec.sum-grow{overflow:visible;flex:none}
+  .sum-alerts{padding:8px 16px}
+  .sum-actions{padding:10px 16px;gap:10px}
+  .sck{grid-template-columns:1fr}
+  .sr{font-size:14px}
+  .diag-tag{font-size:13px}
+  .st{font-size:13px}
+  .stx .tv{font-size:14px}
+  .snote{font-size:14px}
   /* Stats: compact */
   #panel-stats{overflow:hidden!important}
   .stat-top{padding:12px 14px 6px}
@@ -272,6 +289,12 @@ input,textarea,select{font-family:inherit;font-size:inherit}
   .rec-row .rec-info{font-size:13px}
   /* Print buttons etc */
   .note-area{font-size:14px}
+}
+@media(max-width:400px){
+  .topbar-info{display:none}
+  .topbar-title{font-size:13px}
+  .grid-4{grid-template-columns:1fr 1fr}
+  .stat-card .stat-num{font-size:20px}
 }
 /* Decision card-based navigation */
 .dt-step-bar{display:flex;align-items:center;justify-content:center;gap:0;margin-bottom:24px}
