@@ -244,20 +244,20 @@ input,textarea,select{font-family:inherit;font-size:inherit}
   .pw-main{overflow-y:visible;padding:14px 16px}
   .pw-cost{width:100%;border-left:none;border-top:1px solid var(--border);padding:14px 16px}
   /* Summary: full rewrite for mobile */
-  #panel-summary{padding:0!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch}
+  #panel-summary{padding:0!important;overflow-y:auto!important;overflow-x:hidden!important;-webkit-overflow-scrolling:touch}
   .sum-vp{height:auto!important;padding:10px}
-  .sum-page{height:auto!important;overflow:visible!important}
+  .sum-page{height:auto!important;overflow:visible!important;display:block!important}
   .sum-hdr{padding:12px 16px 10px}
   .sum-org{font-size:14px}
   .sum-dot{margin:0 4px}
   .sum-pt .sp{padding:2px 8px;font-size:13px}
   .sum-pt .sp .l{font-size:10px}
-  .sum-cols{flex-direction:column!important;overflow:visible!important;flex:none!important}
-  .sum-left,.sum-right{flex:none!important;overflow:visible!important}
+  .sum-cols{display:block!important;overflow:visible!important;height:auto!important}
+  .sum-left,.sum-right{display:block!important;overflow:visible!important;height:auto!important}
   .sum-left{border-right:none!important;border-bottom:1px solid var(--border)}
-  .sum-sec{padding:10px 16px}
+  .sum-sec{display:block!important;padding:10px 16px;overflow:visible!important;height:auto!important}
   .sum-sec.compact{padding:8px 16px}
-  .sum-sec.sum-grow{overflow:visible!important;flex:none!important}
+  .sum-sec.sum-grow{display:block!important;overflow:visible!important;height:auto!important}
   .sck{grid-template-columns:1fr}
   .sr{font-size:13px;padding:5px 0}
   .diag-tag{font-size:13px}
@@ -266,7 +266,7 @@ input,textarea,select{font-family:inherit;font-size:inherit}
   .stx .tl{font-size:13px}
   .stx .tv{font-size:14px}
   .snote{font-size:13px}
-  .sum-alerts{padding:8px 14px;gap:6px}
+  .sum-alerts{padding:8px 14px;gap:6px;flex-wrap:wrap}
   .sum-alerts .at{font-size:12px}
   .sum-alerts .ai{font-size:12px}
   .sum-actions{padding:10px 16px;gap:10px}
@@ -276,6 +276,7 @@ input,textarea,select{font-family:inherit;font-size:inherit}
   .stat-top{padding:12px 14px 6px}
   .stat-top h3{font-size:16px}
   .stat-filter{padding:2px 14px 8px;gap:6px}
+  .filter-btn{height:30px;font-size:12px;padding:0 10px}
   .stat-tabs{padding:0 14px 8px;gap:2px;overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap}
   .stat-tab{padding:0 10px;font-size:12px;height:32px;white-space:nowrap;flex-shrink:0}
   .stat-content{padding:12px 14px}
@@ -655,8 +656,8 @@ mark{background:#fef08a;border-radius:2px;padding:0 1px}
           <div class="stat-top">
             <h3 style="font-size:18px;font-weight:900">統計儀表板</h3>
             <div style="display:flex;gap:8px">
-              <button class="topbar-btn outline" onclick="APP.exportCSV()"><i class="fa-solid fa-file-csv"></i> CSV</button>
-              <button class="topbar-btn outline" onclick="APP.exportJSON()"><i class="fa-solid fa-file-code"></i> JSON</button>
+              <button class="topbar-btn outline" onclick="APP.exportCSV()"><i class="fa-solid fa-file-csv"></i><span class="mob-hide"> CSV</span></button>
+              <button class="topbar-btn outline" onclick="APP.exportJSON()"><i class="fa-solid fa-file-code"></i><span class="mob-hide"> JSON</span></button>
             </div>
           </div>
           <!-- Filter bar -->
@@ -789,8 +790,9 @@ const CFG = {
   },
 
   // 決策樹額外步驟（突變 & PD-L1）— 若癌別不需要可設空
-  hasMutation: true,   // SCLC 會自動跳過
+  hasMutation: true,   // 全域開關
   hasPdl1: true,
+  skipMutTypes: ['SCLC'],  // ★ 這些型態跳過突變+PD-L1 步驟
 
   // 查檢表
   checklist: [
@@ -1061,20 +1063,25 @@ function dtShowCard(n){
   updateDtSteps();
 }
 
+// ★ Helper: does this type need mutation/pdl1 steps?
+function needsMut(t){ return CFG.hasMutation && !(CFG.skipMutTypes||[]).includes(t); }
+function needsPdl1(t){ return CFG.hasPdl1 && !(CFG.skipMutTypes||[]).includes(t); }
+function totalStepsFor(t){ return 2 + (needsMut(t)?1:0) + (needsPdl1(t)?1:0); }
+
 function updateDtSteps(){
-  const maxDone = A.S.type==='SCLC'?2: A.S.pdl1?4: A.S.mutation?3: A.S.stage?2: A.S.type?1:0;
+  const t = A.S.type;
+  const total = t ? totalStepsFor(t) : 4;
   const dots = document.querySelectorAll('.dt-dot');
   const lines = document.querySelectorAll('.dt-line');
-  const totalSteps = A.S.type==='SCLC'?2:4;
   dots.forEach((d,i)=>{
     const s = i+1;
-    d.style.display = s<=totalSteps?'flex':'none';
+    d.style.display = s<=total?'flex':'none';
     d.classList.remove('active','done');
     if(dtStep==='done'||s<dtStep) d.classList.add('done');
     else if(s==dtStep) d.classList.add('active');
   });
   lines.forEach((l,i)=>{
-    l.style.display = (i+1)<totalSteps?'block':'none';
+    l.style.display = (i+1)<total?'block':'none';
     l.classList.toggle('done', dtStep==='done'||(i+1)<dtStep);
   });
 }
@@ -1093,18 +1100,19 @@ A.dt = function(q,v){
 
 function showStage(type){
   const opts=document.getElementById('q-stage-opts');
-  document.getElementById('q-stage-label').textContent = type==='SCLC'?'分期 (SCLC)':'臨床分期';
+  document.getElementById('q-stage-label').textContent = '臨床分期';
   opts.innerHTML = STAGES[type].map(s=>`<button class="big-btn dt-btn" data-q="stage" data-val="${s.v}" onclick="APP.dt('stage','${s.v}')"><div><div class="btn-label">${s.l}</div></div></button>`).join('');
   A.S.stage='';A.S.mutation='';A.S.pdl1='';
   dtShowCard(2);
 }
 function showMut(){
-  if(A.S.type==='SCLC'){ A.S.mutation='N/A';A.S.pdl1='N/A'; showDone(); return; }
+  if(!needsMut(A.S.type)){ A.S.mutation='N/A'; if(!needsPdl1(A.S.type)){A.S.pdl1='N/A';showDone();}else{showPDL1();} return; }
   A.S.mutation='';A.S.pdl1='';
   document.querySelectorAll('.dt-btn[data-q="mutation"]').forEach(b=>b.classList.remove('selected'));
   dtShowCard(3);
 }
 function showPDL1(){
+  if(!needsPdl1(A.S.type)){ A.S.pdl1='N/A'; showDone(); return; }
   A.S.pdl1='';
   document.querySelectorAll('.dt-btn[data-q="pdl1"]').forEach(b=>b.classList.remove('selected'));
   dtShowCard(4);
@@ -1120,8 +1128,7 @@ function showDone(){
 
 A.dtBack = function(to){
   if(to==='last'){
-    // go back to last applicable step
-    to = A.S.type==='SCLC'?2:(A.S.pdl1?4:A.S.mutation?3:A.S.stage?2:1);
+    to = totalStepsFor(A.S.type);
   }
   dtShowCard(to);
 };
@@ -1134,23 +1141,28 @@ function restoreDT(){
   document.querySelectorAll('.dt-btn[data-q="type"]').forEach(b=>b.classList.toggle('selected',b.dataset.val===savedType));
   // Build stage opts (without wiping values)
   const opts=document.getElementById('q-stage-opts');
-  document.getElementById('q-stage-label').textContent = savedType==='SCLC'?'分期 (SCLC)':'臨床分期';
+  document.getElementById('q-stage-label').textContent = '臨床分期';
   opts.innerHTML = STAGES[savedType].map(s=>`<button class="big-btn dt-btn" data-q="stage" data-val="${s.v}" onclick="APP.dt('stage','${s.v}')"><div><div class="btn-label">${s.l}</div></div></button>`).join('');
   // Restore values
   A.S.type=savedType; A.S.stage=savedStage; A.S.mutation=savedMut; A.S.pdl1=savedPdl1;
   if(!savedStage){ dtShowCard(2); return; }
   document.querySelectorAll('.dt-btn[data-q="stage"]').forEach(b=>b.classList.toggle('selected',b.dataset.val===savedStage));
-  if(savedType==='SCLC'){
-    // SCLC: done after stage
-    const t=TYPE_LABEL[savedType]||'';
-    document.getElementById('dt-summary-text').textContent=[t,savedStage].join(' · ');
+  if(!needsMut(savedType)){
+    // Skip mutation/pdl1 → done
+    const parts=[TYPE_LABEL[savedType],savedStage];
+    if(needsPdl1(savedType)&&savedPdl1&&savedPdl1!=='N/A') parts.push('PD-L1:'+savedPdl1);
+    document.getElementById('dt-summary-text').textContent=parts.join(' · ');
+    if(needsPdl1(savedType)&&!savedPdl1){ dtShowCard(4); return; }
+    if(needsPdl1(savedType)) document.querySelectorAll('.dt-btn[data-q="pdl1"]').forEach(b=>b.classList.toggle('selected',b.dataset.val===savedPdl1));
     dtShowCard('done');
     return;
   }
   if(!savedMut){ dtShowCard(3); return; }
   document.querySelectorAll('.dt-btn[data-q="mutation"]').forEach(b=>b.classList.toggle('selected',b.dataset.val===savedMut));
-  if(!savedPdl1){ dtShowCard(4); return; }
-  document.querySelectorAll('.dt-btn[data-q="pdl1"]').forEach(b=>b.classList.toggle('selected',b.dataset.val===savedPdl1));
+  if(needsPdl1(savedType)){
+    if(!savedPdl1){ dtShowCard(4); return; }
+    document.querySelectorAll('.dt-btn[data-q="pdl1"]').forEach(b=>b.classList.toggle('selected',b.dataset.val===savedPdl1));
+  }
   // All done
   const parts=[TYPE_LABEL[savedType],savedStage];
   if(savedMut&&savedMut!=='N/A') parts.push('突變:'+savedMut);
@@ -1169,8 +1181,10 @@ function renderPW(){
   let side = '<div class="pw-side-title"><i class="fa-solid fa-microscope" style="margin-right:4px"></i> 決策結果</div>';
   side += `<div class="pw-side-row"><span class="l">型態</span><span class="v">${TYPE_LABEL[S.type]}</span></div>`;
   side += `<div class="pw-side-row"><span class="l">分期</span><span class="v">${S.stage}</span></div>`;
-  if(S.type!=='SCLC'){
+  if(needsMut(S.type)){
     if(S.mutation&&S.mutation!=='N/A') side += `<div class="pw-side-row"><span class="l">突變</span><span class="v">${S.mutation}</span></div>`;
+  }
+  if(needsPdl1(S.type)){
     if(S.pdl1&&S.pdl1!=='N/A') side += `<div class="pw-side-row"><span class="l">PD-L1</span><span class="v">${S.pdl1}</span></div>`;
   }
   side += `<div style="flex:1"></div>`;
@@ -1324,7 +1338,8 @@ function renderSummary(){
 
   // Left-top: Diagnosis (compact inline)
   const dTags = [{l:'型態',v:TYPE_LABEL[S.type]||'—'},{l:'分期',v:S.stage||'—'}];
-  if(S.type!=='SCLC'){ dTags.push({l:'突變',v:S.mutation||'—'}); dTags.push({l:'PD-L1',v:S.pdl1||'—'}); }
+  if(needsMut(S.type)){ dTags.push({l:'突變',v:S.mutation||'—'}); }
+  if(needsPdl1(S.type)){ dTags.push({l:'PD-L1',v:S.pdl1||'—'}); }
   document.getElementById('sum-diagnosis').innerHTML =
     `<div class="st"><i class="fa-solid fa-microscope"></i> 診斷</div>` +
     `<div class="diag-row">${dTags.map(d=>`<span class="diag-tag"><span class="l">${d.l}</span><span class="v">${d.v}</span></span>`).join('')}</div>`;
@@ -1346,6 +1361,7 @@ function renderSummary(){
   let txH = '<div class="st"><i class="fa-solid fa-stethoscope"></i> 治療路徑</div>';
   if(S.type && S.stage){
     const fn=PW_SUMMARY[S.type]?.[S.stage]; const txt=fn?fn(S):'尚無對應路徑摘要';
+    // ★ CANCER-SPECIFIC: 判斷是否有自費項目（換癌別時需調整）
     const self=(S.type==='SCLC'&&S.stage==='ES')||(S.mutation==='NONE'&&S.pdl1!=='>=50')||S.mutation==='OTHER';
     txH += `<div class="stx"><div class="tl">🎯 建議方案</div><div class="tv">${txt}</div></div>`;
     txH += `<div class="stx"><div class="tl">💰 費用概估</div><div class="tv">${self?'部分自費項目，建議確認保險':'以健保給付為主'}</div></div>`;
@@ -1358,6 +1374,7 @@ function renderSummary(){
   document.getElementById('sum-notes-box').innerHTML = nH;
 
   // Alerts
+  // ★ CANCER-SPECIFIC: 緊急警示項目（換癌別時需調整）
   const al=['發燒 >38.5°C 或寒顫','劇烈胸痛或咳血增多','喘不過氣或意識模糊','嚴重皮膚水泡或紅疹'];
   document.getElementById('sum-alerts').innerHTML = `<span class="at">⚠ 緊急警訊</span>` + al.map(a=>`<span class="ai"><i class="fa-solid fa-circle-exclamation"></i>${a}</span>`).join('<span class="as">│</span>');
 }
@@ -1457,13 +1474,16 @@ async function loadStats(){
   document.getElementById('stat-cards').innerHTML=`
     <div class="stat-card"><div class="stat-num">${n}</div><div class="stat-label">篩選結果</div></div>
     <div class="stat-card"><div class="stat-num">${allRecs.length}</div><div class="stat-label">總收案</div></div>
-    <div class="stat-card"><div class="stat-num">${recs.filter(r=>r.type==='AD').length}</div><div class="stat-label">腺癌</div></div>
+    <div class="stat-card"><div class="stat-num">${recs.filter(r=>r.type===CFG.types[0].v).length}</div><div class="stat-label">${CFG.types[0].l}</div></div>
     <div class="stat-card"><div class="stat-num">${recs.filter(r=>r.stage==='IV'||r.stage==='ES').length}</div><div class="stat-label">晚期</div></div>`;
-  mkChart('ch-type','doughnut',['腺癌','鱗癌','小細胞'],[recs.filter(r=>r.type==='AD').length,recs.filter(r=>r.type==='SCC').length,recs.filter(r=>r.type==='SCLC').length],['#10b981','#f59e0b','#ef4444']);
-  const stageKeys=['I-II','III','IV','LS','ES'];
-  mkChart('ch-stage','bar',stageKeys,stageKeys.map(s=>recs.filter(r=>r.stage===s).length),['#10b981','#f59e0b','#4f46e5','#ef4444','#dc2626']);
-  const mv=['EGFR','ALK','OTHER','NONE','PENDING','N/A'];
-  mkChart('ch-mut','doughnut',mv,mv.map(m=>recs.filter(r=>r.mutation===m).length),['#10b981','#2563eb','#8b5cf6','#94a3b8','#fbbf24','#d1d5db']);
+  const typeKeys=CFG.types.map(t=>t.v), typeLabels=CFG.types.map(t=>TYPE_LABEL[t.v]), typeColors=['#10b981','#f59e0b','#ef4444','#8b5cf6','#2563eb'];
+  mkChart('ch-type','doughnut',typeLabels,typeKeys.map(k=>recs.filter(r=>r.type===k).length),typeColors.slice(0,typeKeys.length));
+  const allStages=[...new Set(Object.values(STAGES).flat().map(s=>s.v))];
+  mkChart('ch-stage','bar',allStages,allStages.map(s=>recs.filter(r=>r.stage===s).length),['#10b981','#f59e0b','#4f46e5','#ef4444','#dc2626'].slice(0,allStages.length));
+  if(CFG.hasMutation){
+    const mv=['EGFR','ALK','OTHER','NONE','PENDING','N/A'];
+    mkChart('ch-mut','doughnut',mv,mv.map(m=>recs.filter(r=>r.mutation===m).length),['#10b981','#2563eb','#8b5cf6','#94a3b8','#fbbf24','#d1d5db']);
+  }
   const mo={}; recs.forEach(r=>{const d=r.caseDate||r.savedAt||r.created; const k=d.substring(0,7); mo[k]=(mo[k]||0)+1;});
   const mk=Object.keys(mo).sort();
   mkChart('ch-trend','line',mk,mk.map(k=>mo[k]),['#2563eb']);
@@ -1493,8 +1513,8 @@ async function loadStats(){
   }
 
   // ── Cross table: type × stage ──
-  const types=['AD','SCC','SCLC'];
-  const stages=['I-II','III','IV','LS','ES'];
+  const types=CFG.types.map(t=>t.v);
+  const stages=allStages;
   let maxVal=0;
   const grid={};
   types.forEach(t=>{ grid[t]={}; stages.forEach(s=>{ grid[t][s]=recs.filter(r=>r.type===t&&r.stage===s).length; if(grid[t][s]>maxVal)maxVal=grid[t][s]; }); });
